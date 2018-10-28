@@ -4,6 +4,8 @@
 注意：在推导WT时，WT的正负不会影响决策面的值，而W0的正负与决策面有关
 WT = Sw.I * (m1 - m2)
 w0 = -1/2 * (WT*m1 + WT*m2)
+
+Note: to run the code, you need to download the common library
 """
 
 import sys
@@ -11,7 +13,7 @@ import time
 
 sys.path.append("D:/common/")
 
-import misc_utils
+import misc_utils 
 import math_utils
 import numpy as np
 import matplotlib.pyplot as plt
