@@ -71,8 +71,8 @@ def LoG():
     img_original = cv.imread('pictures/building.tif', 0)
 
     # 创建按钮
-    button_units = [['threshold', 55, 100],
-                    ['sigma', 4, 10],
+    button_units = [['threshold', 6, 100],
+                    ['sigma', 2, 10],
                     ['n', 25, 30]]
 
     track_bar = opencv.createTrackbar(button_units, "trackbar")

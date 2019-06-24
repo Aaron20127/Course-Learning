@@ -56,7 +56,7 @@ class plot:
     def plot_base(self, y_coordinate, x_coordinate = [], line_lable = [], 
                 line_color = [], title = '', x_lable = '', y_lable = '',
                 x_limit = [], y_limit = [], y_scale = 'linear', p_type = [],
-                grad = False, axis_equal = False):
+                moveAxisToZero = False, grad = False, axis_equal = False):
         """
         描述：画一幅坐标曲线图，可以同时有多条曲线
         参数：y_coordinate （y坐标值，二元列表，例如[[1,2,3],[4,5,6]]，表示有两条曲线，每条曲线的y坐标为[1,2,3]和[4,5,6]）
@@ -113,7 +113,7 @@ class plot:
                         linewidth = 2.0, label = line_lable[i])      
             elif p_type[i] == 'scatter': 
                 ax.scatter(x_coordinate[i], y_coordinate[i],  s = 90, c=line_color[i%len(line_color)],\
-                            linewidth = 2.0, alpha=0.6, marker='+', label = line_lable[i])
+                            linewidth = 2.0, alpha=0.6, marker='.', label = line_lable[i])
             else:
                 print ("error：Invalid p_type %s！" % (p_type[i]))
                 sys.exit()
@@ -133,8 +133,21 @@ class plot:
         plt.legend(loc="best") # 线条的名称显示在右下角
         if grad: plt.grid(True) # 网格
 
-        # plt.savefig("file.png", dpi = 200)  #保存图片，默认png     
-        # plt.show()
+        # 坐标轴始终移动到(0,0)重合
+        if moveAxisToZero:
+            # 获取当前的坐标轴, gca = get current axis
+            ax = plt.gca()
+            # 设置右边框和上边框
+            ax.spines['right'].set_color('none')
+            ax.spines['top'].set_color('none')
+            # 设置x坐标轴为下边框
+            ax.xaxis.set_ticks_position('bottom')
+            # 设置y坐标轴为左边框
+            ax.yaxis.set_ticks_position('left')
+            # 设置x轴, y周在(0, 0)的位置
+            ax.spines['bottom'].set_position(('data', 0))
+            ax.spines['left'].set_position(('data', 0))
+
 
     def plot_base_3d(self, x_coordinate, y_coordinate, z_function, title = '',
                 x_lable = '', y_lable = '', z_lable = '',
