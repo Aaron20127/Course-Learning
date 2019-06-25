@@ -54,7 +54,7 @@ def harris_corners(img, blockSzie=2, SobelSize=3, k=0.04):
     M = np.zeros((2,2))
 
     # response要跟图像一样大小，只计算出中心那些可以加窗的，边缘那些设置为0
-    k=0
+    count=0
     for i in range(H-blockSzie+1):
         for j in range(W-blockSzie+1):
             M[0,0] = np.sum(window * dx_squared[i:i + blockSzie, j:j + blockSzie])
@@ -68,8 +68,8 @@ def harris_corners(img, blockSzie=2, SobelSize=3, k=0.04):
             j_shifted = j + half_blockSzie
             response[i_shifted][j_shifted] = R
 
-            k +=1
-            print((H-blockSzie+1) * (W-blockSzie+1), '/', k)
+            count +=1
+            print((H-blockSzie+1) * (W-blockSzie+1), '/', count)
     ### END YOUR CODE
 
     return response
@@ -91,12 +91,18 @@ if __name__ == "__main__":
     # cv.waitKey(0)
 
     # harris detect
-    img_corner = harris_corners(gray, 2)      
+    dst = harris_corners(gray, 3)  
+    dst = dst / dst.max()  
+
+    # draw corners
+    img_corner = img.copy()
+    img_corner[dst>0.01 * dst.max()] = [0,0,255]  
 
     # imshow
     data = [
             [gray, 'origin', 'gray'],
-            [img_corner, 'harris corners', 'gray']
+            [dst, 'harris corners', 'gray'],
+            [img_corner[...,::-1], 'img add corners']
     ]
-    misc_utils.plot().plot_multiple_picture((1,2), data)
+    misc_utils.plot().plot_multiple_picture((1,3), data)
     plt.show()

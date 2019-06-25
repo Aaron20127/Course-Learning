@@ -29,7 +29,9 @@ def cornerHarris():
     gray = np.float32( gray )
 
     # find Harris corners
-    dst = cv.cornerHarris( gray, 2, 3, 0.04 )
+    dst = cv.cornerHarris( gray, 3, 3, 0.04 )
+    dst = dst / dst.max()  
+
 
     # draw corners
     img_corners = img.copy()
@@ -39,8 +41,8 @@ def cornerHarris():
 
     # imshow
     data = [ [img[...,::-1], 'Original'],
-             [dst, 'only corners', 'gray'],
-             [img_corners[...,::-1], 'img_corners'],]
+             [dst, 'harris corners', 'gray'],
+             [img_corners[...,::-1], 'img add corners'],]
 
     misc_utils.plot().plot_multiple_picture((1,3), data)
     plt.show()
