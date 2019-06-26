@@ -97,7 +97,7 @@ class createTrackbar():
     """
     描述: 创建任意多个拖动条
     """
-    def __init__(self, button_units, bar_name, size=(200, 400)):
+    def __init__(self, button_units, bar_name, size=(200, 400), block=False):
         """
         描述: 初始化拖动条
         参数: button_units: list, 每个元素是一个list(3)， 
@@ -107,10 +107,12 @@ class createTrackbar():
 
               bar_name: 整个滑动条图片的名称
               size:     附加在按钮上的图片大小
+              block:    阻塞机制，如果参数没变化就一直等待,每次循环阻塞默认10ms
         """
         self._button_units = button_units
         self._bar_name = bar_name
         self._size = size
+        self._block = block
         self._paralist = []
         
         imgTrackbar = np.zeros((size[0],size[1],3), np.uint8) #大的黑板，保证拖动条能完全显示
@@ -137,6 +139,15 @@ class createTrackbar():
         for unit in self._button_units:
             paralist.append(cv.getTrackbarPos(unit[0], self._bar_name))
 
+        ## 如果参数没变化就等待
+        if self._block:
+            while(paralist == self._paralist):
+                paralist = []
+                for unit in self._button_units:
+                    paralist.append(cv.getTrackbarPos(unit[0], self._bar_name))
+                cv.waitKey(10)
+
+        self._paralist = paralist
         return paralist
 
 

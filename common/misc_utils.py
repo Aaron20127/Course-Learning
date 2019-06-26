@@ -26,6 +26,15 @@ import matplotlib.animation as animation
 
 import multiprocessing
 
+# gets the absolute path to the file
+abspath = os.path.abspath(os.path.dirname(__file__))
+# add the library file path
+sys.path.append(abspath)
+# change the work path
+os.chdir(abspath)
+
+import opencv
+
 def write_list_to_file(file, list):
     """
     描述：将字典转换成json字符串，并写入相应文件中
@@ -55,8 +64,9 @@ def read_list_from_file(file):
 class plot:
     def plot_base(self, y_coordinate, x_coordinate = [], line_lable = [], 
                 line_color = [], title = '', x_lable = '', y_lable = '',
-                x_limit = [], y_limit = [], y_scale = 'linear', p_type = [],
-                moveAxisToZero = False, grad = False, axis_equal = False):
+                x_limit = [], y_limit = [], y_scale = 'linear', scatterMarker = '.',
+                p_type = [], moveAxisToZero = False, grad = False,
+                axis_equal = False, dynanmicDisplay=False, pause=0.001):
         """
         描述：画一幅坐标曲线图，可以同时有多条曲线
         参数：y_coordinate （y坐标值，二元列表，例如[[1,2,3],[4,5,6]]，表示有两条曲线，每条曲线的y坐标为[1,2,3]和[4,5,6]）
@@ -64,13 +74,17 @@ class plot:
                 line_lable   （每条曲线代表的意义，就是曲线的名称，没有定义则使用默认的）
                 line_color    (曲线的颜色，一维列表，如果比曲线的条数少，则循环使用给定的颜色；不给定时，使用默认颜色；
                             更多色彩查看 http://www.114la.com/other/rgb.htm)
-                title        （整个图片的名称）
-                x_lable      （x轴的含义）
-                y_lable       (y轴的含义)
-                x_limit       (x坐标的显示范围)
-                y_scale       (y轴的单位比例，'linear'常规，'log'对数)
-                p_type        (类型：line线条，scatter散点)
-                grad          (网格)
+                title          (整个图片的名称)
+                x_lable        (x轴的含义)
+                y_lable        (y轴的含义)
+                x_limit        (x坐标的显示范围)
+                y_scale        (y轴的单位比例，'linear'常规，'log'对数)
+                p_type         (类型：line线条，scatter散点)
+                moveAxisToZero (坐标轴始终画到(0,0)轴)
+                grad           (网格)
+                figureName     (图片名称)
+                dynanmicDisplay (动态显示图片，如果是静态，如果title相同，则只能调用该函数一次)
+                pause          (动态显示刷新时间)
         """
 
         if (x_coordinate and (len(y_coordinate) != len(x_coordinate))):
@@ -91,19 +105,24 @@ class plot:
             print ("warning: 指定颜色种类少于线条数，线条%d种，颜色%d种！" % \
                     (len(y_coordinate),len(line_color)))
 
-        # plt.figure(figsize=(70, 35)) 
-        plt.figure() 
+        ### dynamic display
+        if dynanmicDisplay:
+            plt.figure(title).clf()
+ 
+        ### plt.figure(figsize=(70, 35)) 
+        plt.figure(title) 
+
         ax = plt.subplot(111)
 
-        # 如果没有给x的坐标，设置从0开始计数的整数坐标
+        ### 如果没有给x的坐标，设置从0开始计数的整数坐标
         if not x_coordinate:
             x_coordinate = [range(len(y)) for y in y_coordinate]
 
-        # 如果没有给线条名称，则使用默认线条名称
+        ### 如果没有给线条名称，则使用默认线条名称
         if not line_lable:
             line_lable = ["line " + str(i) for i in range(len(y_coordinate))]
 
-        # 如果没有指定图形类型，默认画线条line
+        ### 如果没有指定图形类型，默认画线条line
         if not p_type:
             p_type = ["line" for y in y_coordinate]
 
@@ -113,7 +132,7 @@ class plot:
                         linewidth = 2.0, label = line_lable[i])      
             elif p_type[i] == 'scatter': 
                 ax.scatter(x_coordinate[i], y_coordinate[i],  s = 90, c=line_color[i%len(line_color)],\
-                            linewidth = 2.0, alpha=0.6, marker='.', label = line_lable[i])
+                            linewidth = 2.0, alpha=0.6, marker=scatterMarker, label = line_lable[i])
             else:
                 print ("error：Invalid p_type %s！" % (p_type[i]))
                 sys.exit()
@@ -133,7 +152,7 @@ class plot:
         plt.legend(loc="best") # 线条的名称显示在右下角
         if grad: plt.grid(True) # 网格
 
-        # 坐标轴始终移动到(0,0)重合
+        ### 坐标轴始终移动到(0,0)重合
         if moveAxisToZero:
             # 获取当前的坐标轴, gca = get current axis
             ax = plt.gca()
@@ -148,6 +167,9 @@ class plot:
             ax.spines['bottom'].set_position(('data', 0))
             ax.spines['left'].set_position(('data', 0))
 
+        ### extended display time
+        if dynanmicDisplay:
+            plt.pause(pause)
 
     def plot_base_3d(self, x_coordinate, y_coordinate, z_function, title = '',
                 x_lable = '', y_lable = '', z_lable = '',
@@ -250,14 +272,19 @@ class plot:
                 plt.xticks([]) # 关闭图片刻度，必须放在imshow之后才生效
                 plt.yticks([])
 
-    def plot_multiple_picture(self, size, data, equal=False):
-        """描述：在一幅图中简单地绘制n幅图片
-        size: 元组，size[0]表示行数，size[1]表示列数 
-        data: 绘图需要的信息，data是元组，每个元素也是一个元组
-                data[0][0]:表示RGB矩阵, narray
-                data[0][1]:表示名字，string
-                data[0][2]:表示显示时的色彩，string
-        return: None
+    def plot_multiple_picture(self, size, data, title='default', equal=False, 
+                              dynanmicDisplay=False, pause=0.001):
+        """ 描述：在一幅图中简单地绘制n幅图片
+            size:   元组，size[0]表示行数，size[1]表示列数 
+            data:   绘图需要的信息，data是元组，每个元素也是一个元组
+                    data[0][0]:表示RGB矩阵, narray
+                    data[0][1]:表示名字，string
+                    data[0][2]:表示显示时的色彩，string
+            title:  图片名称
+            equal:  图片长宽是否按比例
+            dynanmicDisplay：是否动态显示图片
+            pause:  动态显示图片时，延长显示图片的时间
+            return: None
         """
         count = size[0] * size[1]
         data_len = len(data)
@@ -266,9 +293,13 @@ class plot:
             print ("error：too many pictures！")
             sys.exit()
 
-        plt.figure()
-        pos = size[0]*100 + size[1]*10
+        ### dynamic display
+        if dynanmicDisplay:
+            plt.figure(title).clf()
 
+        plt.figure(title)
+
+        pos = size[0]*100 + size[1]*10
         for i in range(data_len):
             plt.subplot(pos + i + 1)
 
@@ -283,6 +314,10 @@ class plot:
             plt.title(data[i][1])
             plt.xticks([]), plt.yticks([])
             if equal: plt.axis("equal")
+
+        ### extended display time
+        if dynanmicDisplay:
+            plt.pause(pause)
 
     def test(self):
         ### 1. 基本曲线图
@@ -349,6 +384,56 @@ class plot:
 
         plt.show()
 
+    def testDynanmic(self):
+        """ 动态绘制曲线图和显示图片
+        """
+        x = np.linspace(0, 10, 1000, endpoint=False)
+
+        # 控件
+        button_units = [['k', 20,  20]]
+        track_bar = opencv.createTrackbar(button_units, "trackbar", block=True)
+
+        # 读取文件
+        filename1 =  'tmp/flower.jpg'
+        filename2 =  'tmp/stinkbug.png'
+        img_1 = cv2.imread( filename1 )
+        img_2 = cv2.imread( filename2 )
+
+        while(True):
+            [k] = track_bar.getTrackbarPos()
+
+            ### 1.动态绘制曲线图
+            y = x + k
+            self.plot_base(
+                    [y],
+                    [x],
+                    line_lable = ["A"],
+                    line_color = ['#4876FF'],
+                    title = "A",
+                    x_lable = 'Ix',
+                    y_lable = 'Iy',
+                    p_type = ['scatter'],
+                    dynanmicDisplay=True) 
+        
+            self.plot_base(
+                    [y, x],
+                    [x, y],
+                    line_lable = ["B", "B"],
+                    line_color = ['#4876FF', '#487600'],
+                    title = "B",
+                    x_lable = 'Ix',
+                    y_lable = 'Iy',
+                    p_type = ['scatter', 'scatter'],
+                    dynanmicDisplay=True) 
+
+            ### 2.动态显示图片
+            img_1_scale = np.uint8(img_1[...,::-1] * (k / 20.0))
+            img_2_scale = np.uint8(img_2[...,::-1] * (k / 20.0))
+            data = [ [img_1_scale, 'flower'],
+                     [img_2_scale, 'stinkbug']]
+            self.plot_multiple_picture((1,2), data, 'demo', dynanmicDisplay=True)
+
 
 if __name__=="__main__":        	
-    plot().test()
+    # plot().test()
+    plot().testDynanmic()
