@@ -97,7 +97,7 @@ def perspectiveTransformation_2D():
     函数：cv.getPerspectiveTransform，cv.warpPerspective
     返回: None 
     """
-    img = cv.imread('pictures/perspective.jpg')
+    img = cv.imread(abspath + '/pictures/perspective.jpg')
     rows,cols,ch = img.shape
     pts1 = np.float32([[66,77],[436,62],[33,456],[460,460]])
     pts2 = np.float32([[0,0],[300,0],[0,300],[300,300]])
@@ -120,7 +120,7 @@ def adjustTransformationParameters():
         pass
 
     imgTrackbar = np.zeros((100,600,3), np.uint8) #大的黑板，保证拖动条能完全显示
-    img = cv.imread('pictures/perspective.jpg')
+    img = cv.imread(abspath + '/pictures/perspective.jpg')
     imgBlock = np.zeros((720,600,3), np.uint8) 
 
     cv.namedWindow('image',0)
@@ -149,6 +149,7 @@ def adjustTransformationParameters():
         p3x = cv.getTrackbarPos('p3x','image')
         p3y = cv.getTrackbarPos('p3y','image')
 
+        ## 注意row是y, col是x，所以下边的所有坐标是(col, row)
         imgBlock = np.zeros((720,600,3), np.uint8) 
         pts1 = np.float32([[66,77],[436,62],[33,456],[460,460]])
         pts2 = np.float32([[p0x,p0y],[p1x,p1y],[p2x,p2y],[p3x,p3y]])

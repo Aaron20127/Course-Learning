@@ -82,7 +82,7 @@ def calibrateCamera():
     # Arrays to store object points and image points from all the images.
     objpoints = [] # 3d point in real world space
     imgpoints = [] # 2d points in image plane.
-    images = glob.glob('*.jpg')
+    images = glob.glob(abspath + '/' + 'calib_radial_half.jpg')
 
     for fname in images:
         img = cv.imread(fname)
@@ -107,7 +107,7 @@ def calibrateCamera():
 
             # 根据内参和畸变系数矫正图片，使用LM算法将图片坐标映射到新的坐标，并将映射矩阵保存
             # remap_mtx = undistort(img, mtx, dist[0])
-            remap_mtx = np.load('undistort.npy')
+            remap_mtx = np.load(abspath + '/undistort.npy')
 
             # 获取最大最小像素位置
             maxn = int(np.max(remap_mtx))+1    

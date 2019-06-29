@@ -150,6 +150,33 @@ class createTrackbar():
         self._paralist = paralist
         return paralist
 
+class cameraUnistort():
+    """
+    畸变图片矫正
+    """
+    def __init__(self, mtx, dist, image_size):
+        """
+        描述: 初始化，获取矫正畸变的重映射矩阵
+        参数：mtx：内参矩阵，narray, shape(3,3)
+             dist：畸变系数矩阵，narray, shape(1,5), [k1, k2, p1, p2, k3]
+             image_size: 图像长和宽，注意应该是(image.shape[1], image.shape[0])
+        返回：矫正后的图片矩阵，narray, shape(m,n)
+        """
+        ## 计算新相机矩阵和没有黑边的区域roi
+        newcameramtx, roi = cv.getOptimalNewCameraMatrix( \
+            mtx, dist, image_size, 0, image_size)
+
+        ## 得到新的映射矩阵，mapx, mapy, narray, shape(m,n)
+        self.mapx, self.mapy = \
+            cv.initUndistortRectifyMap(mtx, dist, None, newcameramtx, image_size, 5)
+        
+    def undistort(self, img):
+        """
+        描述: 将畸变图片像素位置映射到矫正后的像素位置
+        输入：img：畸变图片矩阵，narray, shape(m,n)
+        返回：矫正后的图片矩阵，narray, shape(m,n)
+        """
+        return cv.remap(img, self.mapx, self.mapy, cv.INTER_LINEAR)
 
 if __name__=="__main__":
     img = drawHist(np.array([[1]]))
