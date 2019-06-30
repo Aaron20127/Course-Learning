@@ -17,7 +17,7 @@ sys.path.append(abspath + "/../../../common")
 os.chdir(abspath)
 
 
-def draw(img, corners, imgpts):
+def drawAixs(img, corners, imgpts):
     ## The first corner is connected to three axes
     corner = tuple(corners[0].ravel())
     img = cv.line(img, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
@@ -59,12 +59,12 @@ def pose_estimation():
                 cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
             ### 2.get the external parameters and project points
-            axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
+            axis = np.float32([[2,0,0], [0,2,0], [0,0,-2]]).reshape(-1,3)
             ## Find the rotation and translation vectors. get extern para
             ret, rvecs, tvecs = cv.solvePnP(objp, corners2, mtx, dist)
             ## project 3D points to image plane, get the external parameters
             imgpts, jac = cv.projectPoints(axis, rvecs, tvecs, mtx, dist)
-            img = draw(img, corners2, imgpts)
+            img = drawAixs(img, corners2, imgpts)
             cv.imshow('img',img)
             cv.waitKey(0)
 
