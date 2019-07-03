@@ -1,5 +1,5 @@
 """
-对双目拍摄的矫正后的图片求视差
+pose estimation
 """
 import sys
 import numpy as np

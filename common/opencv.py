@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import sys
 
 def normlizeImage2Uint8(img):
     """
@@ -160,7 +161,7 @@ class cameraUnistort():
         参数：mtx：内参矩阵，narray, shape(3,3)
              dist：畸变系数矩阵，narray, shape(1,5), [k1, k2, p1, p2, k3]
              image_size: 图像长和宽，注意应该是(image.shape[1], image.shape[0])
-        返回：矫正后的图片矩阵，narray, shape(m,n)
+        返回：None
         """
         ## 计算新相机矩阵和没有黑边的区域roi
         newcameramtx, roi = cv.getOptimalNewCameraMatrix( \
@@ -177,6 +178,75 @@ class cameraUnistort():
         返回：矫正后的图片矩阵，narray, shape(m,n)
         """
         return cv.remap(img, self.mapx, self.mapy, cv.INTER_LINEAR)
+
+def cameraCalibration(images = [], girdWith=7, gridHeight=6, 
+                      printMassege=True, showFindCorner=False):
+    """
+    描述: 使用棋盘格标定相机, https://docs.opencv.org/master/dc/dbb/tutorial_py_calibration.html
+    @images：BGR图片数组，list, [narray1, narray2, ...]
+    @girdWith：横向寻找的角点个数, int
+    @gridHeight: 纵向寻找的角点个数, int
+    @showFindCorner: 是否显示角点图
+    @showReprojectError: 是否显示所有重投影误差
+    返回：
+    @ret: 不是很确定，应该是单应变换的误差
+    @mtx: 内参矩阵
+    @dist: 畸变系数
+    @rvecs: 旋转向量
+    @tvecs: 平移向量
+    """
+    # 世界坐标系中的棋盘格点, 例如(0,0,0), (1,0,0), (2,0,0) ...., 设Z坐标为0，缺少尺度
+    objp = np.zeros((girdWith*gridHeight,3), np.float32)
+    objp[:,:2] = np.mgrid[0:girdWith,0:gridHeight].T.reshape(-1,2)
+    # 储存棋盘格角点的世界坐标和像素坐标对
+    objpoints = [] # 在世界坐标系中的三维点
+    imgpoints = [] # 在图像平面像素坐标
+
+    i = 0
+    for img in images:
+        i += 1
+        # img = cv.imread(fname)
+        gray = cv.cvtColor(img,cv.COLOR_BGR2GRAY)
+        # 找到棋盘格角点
+        ret, corners = cv.findChessboardCorners(gray, (girdWith, gridHeight),None)
+
+        # 如果找到足够点对，将其存储起来
+        if ret == True:
+            # 子像素精度
+            criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+            corners = cv.cornerSubPix(gray, corners,(11,11),(-1,-1),criteria)
+            objpoints.append(objp)
+            imgpoints.append(corners)
+            # 将角点在图像上显示
+            if showFindCorner:
+                cv.drawChessboardCorners(gray, (girdWith, gridHeight), corners, ret)
+                cv.namedWindow("img%s" % i, 0)
+                cv.imshow("img%s" % i, img)
+
+    if len(objpoints) == 0:
+        print ('Error: no image are accepted %d/%d !' % (len(objpoints), len(images)))
+        sys.exit()
+
+    if printMassege:
+        print("accepet image: %d/%d" % (len(objpoints), len(images)) )   
+                
+    # calibrate
+    ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+
+    # calculate reprojection
+    if printMassege:
+        reprojection_error = 0
+        for i in range(len(objpoints)):
+            imgpoints2, _ = cv.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
+            error = cv.norm(imgpoints[i],imgpoints2, cv.NORM_L2)/len(imgpoints2)
+            reprojection_error += error
+        print( "mean error: ", reprojection_error/len(objpoints))
+
+    if showFindCorner:
+        cv.waitKey(0)
+
+    return ret, mtx, dist, rvecs, tvecs
+
 
 if __name__=="__main__":
     img = drawHist(np.array([[1]]))
