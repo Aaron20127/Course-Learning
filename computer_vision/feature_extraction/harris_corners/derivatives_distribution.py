@@ -51,10 +51,15 @@ def derivativesDistribution():
         return: None
     """
 
-    filename = ['flat.png', 'edge.png', 'corner.png']
+    filename = ['flat.png', 
+                'edge.png',
+                'corner.png',
+                'bevel_edge.png',
+                'bevel_edge_1.png'
+    ]
 
     for img_name in filename:
-        img = cv.imread( img_name )
+        img = cv.imread( abspath + '/' + img_name )
         gray = cv.cvtColor( img, cv.COLOR_BGR2GRAY )
         gray = np.float32( gray )
 
@@ -63,8 +68,8 @@ def derivativesDistribution():
 
         # show
         misc_utils.plot().plot_base(
-                  [x],
                   [y],
+                  [x],
                   line_lable = [img_name],
                   line_color = ['#4876FF'],
                   title = img_name,

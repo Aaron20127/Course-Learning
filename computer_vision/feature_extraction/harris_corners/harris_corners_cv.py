@@ -20,16 +20,40 @@ import math_utils
 import opencv
 
 def cornerHarris():
-    filename = data_path + '/chessboard.png'
+    filename = [ "corner.png",
+                 "edge.png",
+                 "flat.png",
+                 "bevel_edge.png",
+                 "bevel_edge_1.png",
+                 "blackboard.png"]
+
+    # 控件
+    button_units = [['windowSize',  2, 50],
+                    ['gradientSize', 1, 15],
+                    ['k', 4, 6]]
+    track_bar = opencv.createTrackbar(button_units, "trackbar", block=True)
+
+    # 读取文件
+    filename1 =  'tmp/flower.jpg'
+    filename2 =  'tmp/stinkbug.png'
+    img_1 = cv2.imread( filename1 )
+    img_2 = cv2.imread( filename2 )
+
+
+    while(True):
+
+
+    # filename = data_path + '/chessboard.png'
     # filename = "test.png"
+    filename = abspath + "/bevel_edge.png"
     img = cv.imread( filename )
-    img = cv.resize(img, (int(img.shape[0]*0.02), int(img.shape[1]*0.02)))
-    img = img[0:35, 0:35]
+    # img = cv.resize(img, (int(img.shape[0]*0.02), int(img.shape[1]*0.02)))
+    # img = img[0:35, 0:35]
     gray = cv.cvtColor( img, cv.COLOR_BGR2GRAY )
     gray = np.float32( gray )
 
     # find Harris corners
-    dst = cv.cornerHarris( gray, 3, 3, 0.04 )
+    dst = cv.cornerHarris( gray, 2, 3, 0.04 )
     dst = dst / dst.max()  
 
 
@@ -84,3 +108,4 @@ def cornerWithSubpixelAccuracy():
 
 if __name__ == "__main__":
     cornerHarris()        
+    
