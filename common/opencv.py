@@ -155,17 +155,18 @@ class cameraUnistort():
     """
     畸变图片矫正
     """
-    def __init__(self, mtx, dist, image_size):
+    def __init__(self, mtx, dist, image_size, black_roi=1):
         """
         描述: 初始化，获取矫正畸变的重映射矩阵
         参数：mtx：内参矩阵，narray, shape(3,3)
              dist：畸变系数矩阵，narray, shape(1,5), [k1, k2, p1, p2, k3]
              image_size: 图像长和宽，注意应该是(image.shape[1], image.shape[0])
+             blackRoi: 矫正后是否保留黑边1完全保留，0完全不保留
         返回：None
         """
         ## 计算新相机矩阵和没有黑边的区域roi
         newcameramtx, roi = cv.getOptimalNewCameraMatrix( \
-            mtx, dist, image_size, 0, image_size)
+            mtx, dist, image_size, black_roi, image_size)
 
         ## 得到新的映射矩阵，mapx, mapy, narray, shape(m,n)
         self.mapx, self.mapy = \
