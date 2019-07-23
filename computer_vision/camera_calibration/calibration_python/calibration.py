@@ -108,10 +108,13 @@ def calculateCameraParameters(c_world, c_image):
 
     M, mask = cv.findHomography(c_world[:,:2], c_image)
 
+    # scio.savemat(abspath + '/data.mat',
+    #     {'M':M, 'worldPoints':c_world[:,:2], 'imagePoints':c_image})
+
     # 根据 h1.T*A.-T*A-1*h2 = 0 和 h1.T*A.-T*A-1*h2 = 0 求B = A.-T*A-1
     V = np.zeros((2,6))
-    V[0] = v(1,2,M)
-    V[1] = v(1,1,M) - v(2,2,M)
+    V[0] = v(1,2,M.T)
+    V[1] = v(1,1,M.T) - v(2,2,M.T)
 
     U,sigma,VT=la.svd(V)
     B11, B12, B22, B13, B23, B33 = VT[-1]
@@ -119,15 +122,19 @@ def calculateCameraParameters(c_world, c_image):
     # 计算内参
     v0 = (B12*B13 - B11*B23)/(B11*B22 - B12**2)
     lgda = B33 - (B13**2 + v0*(B12*B13 - B11*B23)) / B11
-    alpha = (lgda / B11)**(0.5)
-    beta = -1*abs((lgda*B11/(B11*B22 - B12**2)))**(0.5)
+    alpha = abs((lgda / B11))**(0.5)
+    beta = abs((lgda*B11/(B11*B22 - B12**2)))**(0.5)
     gamma = -B12*alpha**2*beta / lgda
     u0 = gamma*v0/beta - B13*alpha**2/lgda
 
     # 计算外参
-    A = np.array([[B11, B12, B13],\
-                  [B12, B22, B23],\
-                  [B13, B23, B33]])
+    # A = np.array([[B11, B12, B13],\
+    #               [B12, B22, B23],\
+    #               [B13, B23, B33]])
+    A = np.array([[alpha, gamma,  u0],\
+                  [0, beta, v0],\
+                  [0, 0, 1]])
+
     A_I = la.inv(A)
     h1 = M[:,0].reshape((3,1))
     h2 = M[:,1].reshape((3,1))
@@ -166,11 +173,19 @@ def calculateCameraParameters(c_world, c_image):
     # ret[19] = 162.57328512
     # ret[20] = 221.5293728
 
+    # mniFx = 1.96
+    # ret = np.array([-4.36703982e-03,-5.48105842e-01, 9.14468702e-02, 3.90605722e-01,
+    #         3.60734941e-02,  8.52056468e-01, -9.89540367e-01,  1.59223583e-01,
+    #         2.66255703e-01,  1.27188541e+00,  1.30365067e+00,  3.46052262e+01,
+    #         -6.15408395e+00, -1.05923706e+02,  1.94988251e+03,  7.93414433e-01,
+    #         3.79234027e-02,  2.00140536e+03,  1.81223870e+03,  1.62775336e+02,
+    #         -3.79162165e+01])
+
     # 使用LM算法求解相机参数
     EI = LMS.nonlinearLeastSquare_LM(\
         ret, \
         LMS.LM_findIntrinsicAndExtrinsicParameters(c_world, c_image), \
-        alpha=0.01, beta=10.0, e=0.0001, op=True)
+        alpha=0.01, beta=100.0, e=0.0001, op=True, increment=11)
 
     return ret
 
@@ -186,7 +201,7 @@ def calibrateCamera():
     # Arrays to store object points and image points from all the images.
     objpoints = [] # 3d point in real world space
     imgpoints = [] # 2d points in image plane.
-    images = glob.glob('*.jpg')
+    images = glob.glob(abspath + '/images/1.jpg')
 
     for fname in images:
         img = cv.imread(fname)
@@ -205,8 +220,8 @@ def calibrateCamera():
             imgpoints.append(corners2.reshape(corner_row * corner_col,2))
     
     # 使用LM算法计算单应矩阵
-    H = calculateHomography(objpoints, imgpoints)
-    # x = calculateCameraParameters(objpoints[0], imgpoints[0])
+    # H = calculateHomography(objpoints, imgpoints)
+    x = calculateCameraParameters(objpoints[0], imgpoints[0])
 
     cv.waitKey(0)
     cv.destroyAllWindows()

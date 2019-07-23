@@ -1084,13 +1084,13 @@ class LM_findIntrinsicAndExtrinsicParameters:
 
     def F(self, x):
         """
-        描述: 求解代价函数fi的平方和
+        描述: 求解代价函数fi的平均值
         参数: x: 当前单应矩阵的迭代值, narray, shape(m,)
         返回: 代价值
         """
         ret = 0.0
         for i in range(self.src.shape[0]):
-            ret += ((self.fi(x, self.src[i], self.dst[i]))**2)
+            ret += ((self.fi(x, self.src[i], self.dst[i]))) ** 2
 
         return ret
 
@@ -1333,7 +1333,7 @@ class LM_testQuadraticNonlinearEquation:
         return A
 
 
-def nonlinearLeastSquare_LM(x, calmat, alpha=0.01, beta=10.0, e=0.001, op=False):
+def nonlinearLeastSquare_LM(x, calmat, alpha=0.01, beta=10.0, e=0.001, op=False, increment=9):
     """
     描述: Levenberg Marquardt算法主流程，参考《最优理论与算法2版》陈柏霖 326页
     参数: x: 当前单应矩阵的迭代值, narray, shape(m,)
@@ -1354,20 +1354,25 @@ def nonlinearLeastSquare_LM(x, calmat, alpha=0.01, beta=10.0, e=0.001, op=False)
     i=0
 
     if op: print("Fxinit: ", calmat.F(x))
+
     while(True):
         i+=1
 
         # 计算初始矩阵
         if cal_mat:
-            alpha = alpha/beta
+            alpha = alpha / beta / increment
             f = calmat.fiColumnVector(x0)
             A = calmat.jacobianMatrix(x0)
 
+        # alpha增大到非常大时，会出现错误，变成nan
+        if math.isinf(alpha):
+            alpha = 1e-306
+
         # 计算下降方向，若B不可逆，则增大alpha
-        BB = np.dot(A.T, A) + alpha*np.eye(A.shape[1])
-        while (la.matrix_rank(BB) != BB.shape[1]):
-            alpha = alpha*beta
-            BB = np.dot(A.T, A) + alpha*np.eye(A.shape[1])        
+        BB = (np.dot(A.T, A)) + (alpha*np.eye(A.shape[1]))
+        # while (la.matrix_rank(BB) != BB.shape[1]):
+        #     alpha = alpha*beta
+        #     BB = np.dot(A.T, A) + alpha*np.eye(A.shape[1])        
 
         d = -1 * np.dot( la.inv(BB), np.dot(A.T, f))
         # 求单应矩阵时d前取正号
@@ -1377,10 +1382,6 @@ def nonlinearLeastSquare_LM(x, calmat, alpha=0.01, beta=10.0, e=0.001, op=False)
 
         Fx1 = calmat.F(x1)
         Fx0 = calmat.F(x0)
-
-        # alpha增大到非常大时，会出现错误，变成nan
-        if math.isnan(Fx1):
-            return minix
 
         e1 = la.norm(np.dot(A.T,f), ord=2)
 
@@ -1393,17 +1394,25 @@ def nonlinearLeastSquare_LM(x, calmat, alpha=0.01, beta=10.0, e=0.001, op=False)
                 else:
                     miniFx = Fx0
 
-            print("iteration: ", i)
-            print("cal_mat: ", cal_mat)
-            print("d:\n", d.flatten())
-            print("x1:\n", x1)
+            print("miniFx:", miniFx,
+                    "i:", i, 
+                    "alpha:", alpha, 
+                    "beta:", beta , 
+                    "increment:", increment)
+
             print("x0:\n", x0)
-            print("minix: \n", minix)
-            print("Fx1: ", Fx1)
-            print("Fx0: ", Fx0)
-            print("miniFx: ", miniFx)
-            print("e: ", e1)
-            print("")
+
+            # print("iteration: ", i)
+            # print("cal_mat: ", cal_mat)
+            # print("d:\n", d.flatten())
+            # print("x1:\n", x1)
+            # print("x0:\n", x0)
+            # print("minix: \n", minix)
+            # print("Fx1: ", Fx1)
+            # print("Fx0: ", Fx0)
+            # print("miniFx: ", miniFx)
+            # print("e: ", e1)
+            # print("")
 
         if Fx1 < Fx0:
             if e1 <= e:
@@ -1419,6 +1428,7 @@ def nonlinearLeastSquare_LM(x, calmat, alpha=0.01, beta=10.0, e=0.001, op=False)
                 # 下降失败，则增大alpha，朝靠近梯度负方向更新d
                 alpha=beta*alpha
                 cal_mat = False
+
 
 
 if __name__=="__main__":
