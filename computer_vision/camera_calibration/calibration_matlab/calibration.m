@@ -36,8 +36,8 @@ lb = [];
 ub = [];    
 options.MaxFunctionEvaluations = inf;
 options.MaxIterations = inf;
-options.FunctionTolerance = 1.0000e-26;
-options.StepTolerance = 1.0000e-16;
+options.FunctionTolerance = 1.0000e-6;
+options.StepTolerance = 1.0000e-6;
 
 [x,resnorm,residual,exitflag,output] = lsqcurvefit(@reProjection,x0,xdata,ydata,lb, ub,options);
 x,resnorm,residual,exitflag,output
@@ -45,6 +45,8 @@ x,resnorm,residual,exitflag,output
 
 
 % reprojection func for LM algorithm, only support one image 
+% numerical differentiation using finite difference approximations
+% address: https://toutiao.io/posts/499106/app_preview
 %----------------------------------------------------------------------
 function value=reProjection(x, xdata) 
     totalPara = size(x,2);
