@@ -8,7 +8,7 @@ fileDir = 'E:\Course-Learning\computer_vision\camera_calibration\calibration_mat
 
 % get init Guess value
 [H, validIdx] = computeHomographies(imagePoints, worldPoints);
-x0 = initGuessFromZhang(H);
+x_last = initGuessFromZhang(H);
 
 
 % init xdata n*1, ydata n*1
@@ -25,70 +25,70 @@ alpha=0.01;
 beta=10.0;
 e=1e-3;
 [finalX, iteration, numFunCall, error, residual] = ...
-     myLevenbergMarquardt(x0, xdata, ydata, @calculateJacbian, @calculateFun, alpha, beta, e)
+     myLevenbergMarquardt(x_last, xdata, ydata, @calculateJacbian, @calculateFun, alpha, beta, e)
 
 
 % LM algorith, alpha=0.01, beta=10.0, e=0.001
 %----------------------------------------------------------------------
-function [finalX, iteration, numFunCall, error, residual] = ...
+function [residual, finalX, iteration, numFunCall, error, stepNorm] = ...
           myLevenbergMarquardt(x, xdata, ydata, fun_Jac, fun_F, alpha, beta, e)
 
     done = false;
-    cal_Jac = true;
-    x0 = x;
+    update_Jac = true;
+    x_last = x;
     iteration=0;
     numFunCall=0;
 
-    f0 = fun_F(x0,xdata,ydata);
-    error0 = f0'*f0;
+    f_last = fun_F(x_last,xdata,ydata);
+    error_last = f_last'*f_last;
 
     while(~done)
         iteration = iteration + 1;
 
         % calculate jacbian
-        if cal_Jac
+        if update_Jac
             numFunCall = numFunCall + 1;
-            alpha = alpha / beta / 1.1;
-            J = fun_Jac(x0, xdata, ydata);
-            f = fun_F(x0, xdata, ydata);
+            alpha = alpha / beta;
+            J = fun_Jac(x_last, xdata, ydata);
+            f = fun_F(x_last, xdata, ydata);
         end
 
         % calculate new x
         % d = - inv(J'*J + alpha) * J' * f;
         d = - (J'*J + alpha) \ (J' * f);
-        x1 = x0 + d;
+        x_new = x_last + d;
 
         % new error
-        f1 = fun_F(x1,xdata,ydata);
-        error1 = f1'*f1;
+        f_new = fun_F(x_new,xdata,ydata);
+        error_new = f_new'*f_new;
 
         % terminate condition
-        normd = norm(d)
-        e1 = norm(J' * f);
+        stepNorm = norm(d)
+        gradient = norm(J' * f);
 
-        if (error1 < error0)
-            if e1 <= e
-                finalX = x1;
-                error = error1;
-                residual = f1;
+        if (error_new < error_last)
+            if gradient <= e
+                finalX = x_new;
+                error = error_new;
+                residual = f_new;
                 done = true;
             else
                 % decline in success
-                f0 = f1;
-                error0 = error1;
-                x0 = x1;
-                cal_Jac = true;
+                f_last = f_new;
+                error_last = error_new;
+                x_last = x_new;
+                update_Jac = true;
             end
         else
-            if e1 <= e
-                finalX = x1;
-                error = error1;
-                residual = f1;
+            if gradient <= e
+                finalX = x_new;
+                error = error_new;
+                residual = f_new;
                 done = true;
             else
                 % decline in fail, increase alpha, update in the gradient direction
                 alpha=beta*alpha;
-                cal_Jac = false;
+                update_Jac = false;
             end
         end
     end
@@ -102,9 +102,9 @@ function Jac = calculateJacbian(x, xdata, ydata)
     Jac = [];
     
     for i = 1:size(x,1)
-        x0 = x;
-        x0(i) = x(i) + dx;
-        derivetive = (calculateFun(x0, xdata, ydata) - calculateFun(x, xdata, ydata)) / dx;
+        x_last = x;
+        x_last(i) = x(i) + dx;
+        derivetive = (calculateFun(x_last, xdata, ydata) - calculateFun(x, xdata, ydata)) / dx;
         Jac = [Jac, derivetive];
     end
 end
