@@ -1351,16 +1351,19 @@ def nonlinearLeastSquare_LM(x, calmat, alpha=0.01, beta=10.0, e=0.001, op=False,
     x0 = x
     miniFx=10000000000
     minix=x0
-    i=0
+    iteration=0
+    numFunCall=0
 
     if op: print("Fxinit: ", calmat.F(x))
 
     while(True):
-        i+=1
+        iteration+=1
 
         # 计算初始矩阵
         if cal_mat:
+            numFunCall+=1
             alpha = alpha / beta / increment
+            # alpha = alpha / beta
             f = calmat.fiColumnVector(x0)
             A = calmat.jacobianMatrix(x0)
 
@@ -1395,12 +1398,13 @@ def nonlinearLeastSquare_LM(x, calmat, alpha=0.01, beta=10.0, e=0.001, op=False,
                     miniFx = Fx0
 
             print("miniFx:", miniFx,
-                    "i:", i, 
+                    "iteration:", iteration, 
+                    "numFunCall:", numFunCall, 
                     "alpha:", alpha, 
                     "beta:", beta , 
                     "increment:", increment)
 
-            print("x0:\n", x0)
+            # print("x0:\n", x0)
 
             # print("iteration: ", i)
             # print("cal_mat: ", cal_mat)

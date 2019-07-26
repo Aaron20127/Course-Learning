@@ -2,15 +2,16 @@
 
 % get images full name from dir
 squareSize = 10;  % in units of 'millimeters'
-fileDir = 'E:\Course-Learning\computer_vision\camera_calibration\calibration_matlab\data\binocular\left\'
+fileDir = 'E:\Course-Learning\computer_vision\camera_calibration\calibration_matlab\data\binocular\left\';
 
-[imagePoints, worldPoints] = getImageAndWorldPoints(fileDir, '*.jpg', squareSize)
+[imagePoints, worldPoints] = getImageAndWorldPoints(fileDir, '*.jpg', squareSize);
 
 % get init Guess value
 [H, validIdx] = computeHomographies(imagePoints, worldPoints);
 x0 = initGuessFromZhang(H);
 
-% init xdata, ydata
+
+% init xdata n*1, ydata n*1
 imagesPoints = [];
 for i = 1:size(imagePoints,3)
     tempPoints = imagePoints(:,:,i);
@@ -19,24 +20,102 @@ end
 xdata = double(worldPoints(:));
 ydata = double(imagesPoints);
 
-
-% LM algorithm
-options = optimoptions('lsqcurvefit','Algorithm','levenberg-marquardt');
-lb = [];
-ub = [];    
-options.MaxFunctionEvaluations = inf;
-options.MaxIterations = inf;
-options.FunctionTolerance = 1.0000e-6;
-options.StepTolerance = 1.0000e-6;
-
-[x,resnorm,residual,exitflag,output] = lsqcurvefit(@reProjection,x0,xdata,ydata,lb, ub,options);
-x,resnorm,residual,exitflag,output
+% LM
+alpha=0.01;
+beta=10.0;
+e=1e-3;
+[finalX, iteration, numFunCall, error, residual] = ...
+     myLevenbergMarquardt(x0, xdata, ydata, @calculateJacbian, @calculateFun, alpha, beta, e)
 
 
+% LM algorith, alpha=0.01, beta=10.0, e=0.001
+%----------------------------------------------------------------------
+function [finalX, iteration, numFunCall, error, residual] = ...
+          myLevenbergMarquardt(x, xdata, ydata, fun_Jac, fun_F, alpha, beta, e)
 
-% reprojection func for LM algorithm, only support one image 
-% numerical differentiation using finite difference approximations
+    done = false;
+    cal_Jac = true;
+    x0 = x;
+    iteration=0;
+    numFunCall=0;
+
+    f0 = fun_F(x0,xdata,ydata);
+    error0 = f0'*f0;
+
+    while(~done)
+        iteration = iteration + 1;
+
+        % calculate jacbian
+        if cal_Jac
+            numFunCall = numFunCall + 1;
+            alpha = alpha / beta / 1.1;
+            J = fun_Jac(x0, xdata, ydata);
+            f = fun_F(x0, xdata, ydata);
+        end
+
+        % calculate new x
+        % d = - inv(J'*J + alpha) * J' * f;
+        d = - (J'*J + alpha) \ (J' * f);
+        x1 = x0 + d;
+
+        % new error
+        f1 = fun_F(x1,xdata,ydata);
+        error1 = f1'*f1;
+
+        % terminate condition
+        normd = norm(d)
+        e1 = norm(J' * f);
+
+        if (error1 < error0)
+            if e1 <= e
+                finalX = x1;
+                error = error1;
+                residual = f1;
+                done = true;
+            else
+                % decline in success
+                f0 = f1;
+                error0 = error1;
+                x0 = x1;
+                cal_Jac = true;
+            end
+        else
+            if e1 <= e
+                finalX = x1;
+                error = error1;
+                residual = f1;
+                done = true;
+            else
+                % decline in fail, increase alpha, update in the gradient direction
+                alpha=beta*alpha;
+                cal_Jac = false;
+            end
+        end
+    end
+end
+
+% calculate  Jacbian matrix using finite difference approximations
 % address: https://toutiao.io/posts/499106/app_preview
+%----------------------------------------------------------------------
+function Jac = calculateJacbian(x, xdata, ydata)
+    dx = 0.00001;
+    Jac = [];
+    
+    for i = 1:size(x,1)
+        x0 = x;
+        x0(i) = x(i) + dx;
+        derivetive = (calculateFun(x0, xdata, ydata) - calculateFun(x, xdata, ydata)) / dx;
+        Jac = [Jac, derivetive];
+    end
+end
+
+% calculate function vecter, namely residual
+%----------------------------------------------------------------------
+function value=calculateFun(x, xdata, ydata)
+        value = reProjection(x, xdata) - ydata;
+end
+
+% reprojection for multiple image
 %----------------------------------------------------------------------
 function value=reProjection(x, xdata) 
     totalPara = size(x,1);
@@ -248,12 +327,12 @@ end
 function filename = getFileNameFromDir(filedir, patten)
 % get file full name from file dir patten(such as '/E:/*.jpg')
 imageStruct = dir([filedir patten]);
-numImage = size(imageStruct,1)
+numImage = size(imageStruct,1);
 
-filename = cell(numImage,1)
+filename = cell(numImage,1);
 
 for i=1:numImage
-    filename(i)= {strcat(filedir, imageStruct(i).name)}
+    filename(i)= {strcat(filedir, imageStruct(i).name)};
 end
 end
 
@@ -264,7 +343,7 @@ function [imagePoints, worldPoints] = getImageAndWorldPoints(dir, patten, square
 % @patten: file type, such as *.jpg
 % @squareSize: calibration patten grid size
 
-imageFileNames = getFileNameFromDir(dir, patten)
+imageFileNames = getFileNameFromDir(dir, patten);
 
 % Detect checkerboards in images
 [imagePoints, boardSize, imagesUsed] = detectCheckerboardPoints(imageFileNames);
