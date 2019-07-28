@@ -2,9 +2,9 @@
 
 % get images full name from dir
 squareSize = 10;  % in units of 'millimeters'
-fileDir = 'E:\Course-Learning\computer_vision\camera_calibration\calibration_matlab\data\binocular\left\'
+fileDir = 'D:\Course-Learning\computer_vision\camera_calibration\calibration_matlab\binocular\data\left\'
 
-[imagePoints, worldPoints] = getImageAndWorldPoints(fileDir, '*.jpg', squareSize)
+[imagePoints, worldPoints] = getImageAndWorldPoints(fileDir, '*.jpg', squareSize);
 
 % get init Guess value
 [H, validIdx] = computeHomographies(imagePoints, worldPoints);
@@ -29,8 +29,7 @@ options.MaxIterations = inf;
 options.FunctionTolerance = 1.0000e-6;
 options.StepTolerance = 1.0000e-6;
 
-[x,resnorm,residual,exitflag,output] = lsqcurvefit(@reProjection,x0,xdata,ydata,lb, ub,options);
-x,resnorm,residual,exitflag,output
+[x,resnorm,residual,exitflag,output] = lsqcurvefit(@reProjection,x0,xdata,ydata,lb, ub,options)
 
 
 
@@ -264,7 +263,7 @@ function [imagePoints, worldPoints] = getImageAndWorldPoints(dir, patten, square
 % @patten: file type, such as *.jpg
 % @squareSize: calibration patten grid size
 
-imageFileNames = getFileNameFromDir(dir, patten)
+imageFileNames = getFileNameFromDir(dir, patten);
 
 % Detect checkerboards in images
 [imagePoints, boardSize, imagesUsed] = detectCheckerboardPoints(imageFileNames);

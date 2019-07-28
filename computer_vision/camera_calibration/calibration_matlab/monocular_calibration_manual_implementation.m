@@ -2,7 +2,8 @@
 
 % get images full name from dir
 squareSize = 10;  % in units of 'millimeters'
-fileDir = 'E:\Course-Learning\computer_vision\camera_calibration\calibration_matlab\data\binocular\left\';
+fileDir = 'D:\Course-Learning\computer_vision\camera_calibration\calibration_matlab\binocular\data\left\';
+
 
 [imagePoints, worldPoints] = getImageAndWorldPoints(fileDir, '*.jpg', squareSize);
 
@@ -24,7 +25,7 @@ ydata = double(imagesPoints);
 alpha=0.01;
 beta=10.0;
 e=1e-3;
-[finalX, iteration, numFunCall, error, residual] = ...
+[residual, finalX, iteration, numFunCall, error, stepNorm] = ...
      myLevenbergMarquardt(x_last, xdata, ydata, @calculateJacbian, @calculateFun, alpha, beta, e)
 
 
@@ -357,4 +358,3 @@ originalImage = imread(imageFileNames{1});
 worldPoints = generateCheckerboardPoints(boardSize, squareSize);
 
 end
-
