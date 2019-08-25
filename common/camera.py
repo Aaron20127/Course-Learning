@@ -1,4 +1,3 @@
-
 """
 @ capture multiple cameras images to different folder
 """
@@ -54,7 +53,7 @@ class threadCameraUSB (threading.Thread):
     def run(self):
         cap = cv2.VideoCapture(self.access)
         if cap.isOpened():
-            print('camera ' + self.ip + " connected.")
+            print('camera usb ' + str(self.access) + " connected.")
 
         while True:
             ret, img = cap.read()
@@ -86,7 +85,7 @@ def image_save(queueImage, queueCmd, dstDir, startNum, identification, display=T
                     if queueImage.qsize() > 0:
                         img = queueImage.get()
                         cv2.imwrite(dstDir + '/' + ('%s' % count) + ".png", img)
-                        print('\n' + identification + " save img OK, num " + str(count))
+                        print('\n' + identification + ' save img ' + str(count) + ' OK')
                         count += 1
                         break
 
@@ -105,7 +104,6 @@ def captureMutipleCamera(camera_access=[], start_Num=0, display=True):
                         ["HIKVISION", "admin", "aaron20127", "192.168.0.111", 'D:/data/image'],
                         ["USB", 0, 'D:/data/image']
                     ]
-
     @start_Num     Image show name.
     @display       Whether display image.
     """
@@ -120,15 +118,18 @@ def captureMutipleCamera(camera_access=[], start_Num=0, display=True):
     for camera in camera_access:
         identification = None
         cameraThread = None
+        dstDir = None
         queueImage = queue.Queue(maxsize=4)
         queueCmd = queue.Queue(maxsize=4)
 
         if camera[0] == "HIKVISION":
             identification = camera[3]
+            dstDir = camera[4]
             cameraThread = threadCameraRSTP(camera[1], camera[2], camera[3], queueImage)
 
         elif camera[0] == "USB":
-            identification = "USB " + camera[0]
+            identification = "USB " + str(camera[1])
+            dstDir = camera[2]
             cameraThread = threadCameraUSB(camera[1], queueImage)
 
         # camera thread
@@ -136,7 +137,7 @@ def captureMutipleCamera(camera_access=[], start_Num=0, display=True):
 
         # save image thread
         thread_ids.append(threading.Thread(target=image_save,args=(\
-            queueImage, queueCmd, camera[4], start_Num, identification, display)))
+            queueImage, queueCmd, dstDir, start_Num, identification, display)))
 
         # cmd input queue
         queueCmds.append(queueCmd)
@@ -162,15 +163,15 @@ def captureMutipleCamera(camera_access=[], start_Num=0, display=True):
     if mode == 'a':
             print('')
             print("Autosave mode !")
-            print("Press input the intervals to autosave image times/seconds.")
+            print("Please input the intervals to autosave image times/seconds.")
             intervel = input()
             while(not intervel.isdigit()):
                 print("")
-                print("Press input a positive integer.")
+                print("Please input a positive integer.")
                 intervel = input()
             
             print("")
-            print("Start saving ... \n")
+            print("Start auto saving ... \n")
             intervals_time = 1.0 / int(intervel)
             start = time.time()
             while(True):
@@ -183,6 +184,7 @@ def captureMutipleCamera(camera_access=[], start_Num=0, display=True):
     else:
         print('')
         print("Enter mode !")
+        print("Please press 'Enter' to start saving ... \n")
 
         while(True):
             if(input() == ''):
@@ -194,10 +196,9 @@ if __name__ == '__main__':
     """example to capture camera
     """
     camera_access = [
-        ["HIKVISION", "admin", "aaron20127", "192.168.0.111", abspath + '/data/capture_image/left'],
-        ["HIKVISION", "admin", "aaron20127", "192.168.0.112", abspath + '/data/capture_image/right'],
-        # ["USB",0,  abspath + '/data/capture_image/left']
+        ["HIKVISION", "admin", "aaron20127", "192.168.0.111", abspath + '/image/left'],
+        ["HIKVISION", "admin", "aaron20127", "192.168.0.112", abspath + '/image/right'],
+        ["USB", 0,  abspath + '/image/usb']
     ]
 
     captureMutipleCamera(camera_access, start_Num = 0, display=True)
-
