@@ -1,6 +1,6 @@
 
 """
-@ save multiple cameras images to different folder
+@ capture multiple cameras images to different folder
 """
 
 import cv2
@@ -196,7 +196,7 @@ if __name__ == '__main__':
     camera_access = [
         ["HIKVISION", "admin", "aaron20127", "192.168.0.111", abspath + '/data/capture_image/left'],
         ["HIKVISION", "admin", "aaron20127", "192.168.0.112", abspath + '/data/capture_image/right'],
-        # ["USB",0]
+        # ["USB",0,  abspath + '/data/capture_image/left']
     ]
 
     captureMutipleCamera(camera_access, start_Num = 0, display=True)
