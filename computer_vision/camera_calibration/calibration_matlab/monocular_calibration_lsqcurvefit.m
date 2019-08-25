@@ -1,8 +1,10 @@
-
+% ----------------------------------------------------------
+% calibrate stereo images by myself, LM uses matlab method
+% ----------------------------------------------------------
 
 % get images full name from dir
 squareSize = 10;  % in units of 'millimeters'
-fileDir = 'D:\Course-Learning\computer_vision\camera_calibration\calibration_matlab\binocular\data\left\'
+fileDir = 'E:\Course-Learning\computer_vision\camera_calibration\calibration_matlab\data\binocular\left\'
 
 [imagePoints, worldPoints] = getImageAndWorldPoints(fileDir, '*.jpg', squareSize);
 
@@ -197,7 +199,7 @@ end
 
 %--------------------------------------------------------------------------
 function A = computeIntrinsics(B)
-% Compute the intrinsic matrix
+% Compute the intrinsic matrix, use zhang method
 
 cy = (B(1,2)*B(1,3) - B(1,1)*B(2,3)) / (B(1,1)*B(2,2)-B(1,2)^2);
 lambda = B(3,3) - (B(1,3)^2 + cy * (B(1,2)*B(1,3) - B(1,1)*B(2,3))) / B(1,1);
@@ -246,6 +248,8 @@ end
 %--------------------------------------------------------------------------
 function filename = getFileNameFromDir(filedir, patten)
 % get file full name from file dir patten(such as '/E:/*.jpg')
+% @filedir image dir
+% @filedir image format, such as '*.jpg'
 imageStruct = dir([filedir patten]);
 numImage = size(imageStruct,1)
 
@@ -267,11 +271,6 @@ imageFileNames = getFileNameFromDir(dir, patten);
 
 % Detect checkerboards in images
 [imagePoints, boardSize, imagesUsed] = detectCheckerboardPoints(imageFileNames);
-imageFileNames = imageFileNames(imagesUsed);
-
-% Read the first image to obtain image size
-originalImage = imread(imageFileNames{1});
-[mrows, ncols, ~] = size(originalImage);
 
 % Generate world coordinates of the corners of the squares
 worldPoints = generateCheckerboardPoints(boardSize, squareSize);

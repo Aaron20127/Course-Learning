@@ -1,8 +1,13 @@
-
+% -------------------------------------------------------------
+% calibrate stereo images all by myself, include LM.
+%
+% Note: in LM method, if e is very small, (J'*J + alpha) of LM 
+%       will not take the inverse.
+% -------------------------------------------------------------
 
 % get images full name from dir
 squareSize = 10;  % in units of 'millimeters'
-fileDir = 'D:\Course-Learning\computer_vision\camera_calibration\calibration_matlab\binocular\data\left\';
+fileDir = 'E:\Course-Learning\computer_vision\camera_calibration\calibration_matlab\data\binocular\left\';
 
 
 [imagePoints, worldPoints] = getImageAndWorldPoints(fileDir, '*.jpg', squareSize);
@@ -348,11 +353,6 @@ imageFileNames = getFileNameFromDir(dir, patten);
 
 % Detect checkerboards in images
 [imagePoints, boardSize, imagesUsed] = detectCheckerboardPoints(imageFileNames);
-imageFileNames = imageFileNames(imagesUsed);
-
-% Read the first image to obtain image size
-originalImage = imread(imageFileNames{1});
-[mrows, ncols, ~] = size(originalImage);
 
 % Generate world coordinates of the corners of the squares
 worldPoints = generateCheckerboardPoints(boardSize, squareSize);

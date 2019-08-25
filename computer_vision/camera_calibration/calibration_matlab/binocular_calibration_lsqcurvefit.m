@@ -1,3 +1,8 @@
+% ------------------------------------------
+% calibrate stereo images by myself
+% ------------------------------------------
+
+
 
 main()
 
@@ -48,6 +53,9 @@ Rv = x(end-5:end-3);
 R = vision.internal.calibration.rodriguesVectorToMatrix(Rv)
 T = x(end-2:end)
 
+          % Pr = R * (Pl - T)
+T = -R'*T % It doesn't matter whether T is positive or negative for E and F
+
 intrinsic1 = x(end-17 : end-12);
 intrinsic2 = x(end-11 : end-6);
 
@@ -55,8 +63,10 @@ Ml = [intrinsic1(1), 0, intrinsic1(3); 0, intrinsic1(2), intrinsic1(4); 0, 0, 1]
 Mr = [intrinsic2(1), 0, intrinsic2(3); 0, intrinsic2(2), intrinsic2(4); 0, 0, 1];
 
 Tx = [0,-T(3),T(2);T(3),0,-T(1);-T(2),T(1),0];
-E = R * Tx
-F = inv(Mr') * R * Tx * inv(Ml)
+E = R * Tx 
+F = inv(Mr') * E * inv(Ml)
+
+% validate
 
 end
 
@@ -155,8 +165,13 @@ function value=projectStereo(x, xdata)
        t1 = rt1(4:6,i);
        R1 = vision.internal.calibration.rodriguesVectorToMatrix(r1);
 
+       % all of rotation and translantion are for coordinate system
+       % pl = R1*Pw + t1
+       % Pr = R2*Pw + t2
+       % Pr = R2*R1'*Pl + (T1 - R2*R1'*t1)
+       % Pr = R*Pl + T
        R2 = R1*R;
-       t2 = T + R*t1;
+       t2 = T + R*t1; 
        r2 = vision.internal.calibration.rodriguesMatrixToVector(R2);
 
        rt2 = [rt2; r2; t2];
@@ -248,10 +263,6 @@ function [imagePoints, worldPoints, mrows, ncols] = getImageAndWorldPoints(dir, 
 % @squareSize: calibration patten grid size
 
 imageFileNames = getFileNameFromDir(dir, patten);
-
-% Read one of the images from the first stereo pair
-I1 = imread(imageFileNames{1});
-[mrows, ncols, ~] = size(I1);
 
 % Detect checkerboards in images
 [imagePoints, boardSize, imagesUsed] = detectCheckerboardPoints(imageFileNames);
